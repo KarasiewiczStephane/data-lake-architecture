@@ -1,0 +1,24 @@
+data_volume:
+  bronze_gb: 100
+  silver_gb: 50
+  gold_gb: 10
+
+query_pattern:
+  queries_per_month: 1000
+  avg_data_scanned_gb: 0.5
+
+etl_pattern:
+  runs_per_month: 30
+  avg_duration_minutes: 15
+  dpu_count: 2
+
+lambda_pattern:
+  invocations_per_month: 100000
+  avg_duration_ms: 200
+  memory_mb: 256
+
+s3_requests:
+  put: 50000
+  get: 200000
+
+data_transfer_out_gb: 10
