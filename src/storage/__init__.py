@@ -19,4 +19,4 @@ def get_storage_client() -> MinIOClient:
     )
 
 
-__all__ = ["MinIOClient", "get_storage_client"]
+__all__ = ["MinIOClient", "Partitioner", "get_storage_client"]
