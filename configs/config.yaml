@@ -1,0 +1,19 @@
+minio:
+  endpoint: localhost:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  secure: false
+
+buckets:
+  bronze: datalake-bronze
+  silver: datalake-silver
+  gold: datalake-gold
+
+partitioning:
+  date_format: "%Y/%m/%d"
+
+catalog:
+  db_path: ./catalog.db
+
+logging:
+  level: INFO
