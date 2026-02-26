@@ -1,4 +1,4 @@
-.PHONY: install test lint clean run up down init
+.PHONY: install test lint clean run up down init shell
 
 install:
 	pip install -r requirements.txt
@@ -25,3 +25,6 @@ down:
 
 init: up
 	python -m src.cli init
+
+shell:
+	docker-compose exec datalake bash

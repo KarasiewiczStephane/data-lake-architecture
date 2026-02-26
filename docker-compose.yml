@@ -18,6 +18,50 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - datalake
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: datalake-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set minio http://minio:9000 minioadmin minioadmin;
+      mc mb --ignore-existing minio/datalake-bronze;
+      mc mb --ignore-existing minio/datalake-silver;
+      mc mb --ignore-existing minio/datalake-gold;
+      exit 0;
+      "
+    networks:
+      - datalake
+
+  datalake:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: datalake-app
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      DATALAKE_CONFIG: /app/configs/config.yaml
+    volumes:
+      - ./data:/app/data
+      - ./configs:/app/configs
+    networks:
+      - datalake
+    stdin_open: true
+    tty: true
 
 volumes:
   minio_data:
+
+networks:
+  datalake:
+    driver: bridge
