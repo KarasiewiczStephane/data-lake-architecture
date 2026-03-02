@@ -187,7 +187,7 @@ class SilverProcessor:
         for col in result.columns:
             if col == "_source_file":
                 continue
-            if result[col].dtype == "object":
+            if pd.api.types.is_string_dtype(result[col]):
                 result[col] = result[col].fillna("")
             else:
                 result[col] = result[col].fillna(0)

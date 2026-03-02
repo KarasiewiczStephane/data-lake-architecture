@@ -12,8 +12,8 @@ resource "aws_lambda_function" "event_processor" {
 
   environment {
     variables = {
-      PROJECT_NAME = var.project_name
-      ENVIRONMENT  = var.environment
+      PROJECT_NAME  = var.project_name
+      ENVIRONMENT   = var.environment
       SILVER_BUCKET = aws_s3_bucket.silver.id
     }
   }
