@@ -33,6 +33,7 @@ A production-grade data lake implementation using the medallion architecture pat
 - **Query Engine** - DuckDB-based SQL queries over Parquet files with multiple output formats
 - **Cost Estimator** - AWS cost projection for S3, Glue, Athena, and Lambda services
 - **Quality Framework** - Configurable data quality checks (null rates, uniqueness, ranges, schema conformance)
+- **Dashboard** - Streamlit monitoring UI with layer health, data quality heatmaps, ingestion throughput, and cost breakdown
 
 ## Quick Start
 
@@ -41,37 +42,50 @@ A production-grade data lake implementation using the medallion architecture pat
 - Python 3.12+
 - Docker and Docker Compose
 
-### Setup
+### 1. Install Dependencies
 
 ```bash
-# Clone the repository
 git clone git@github.com:KarasiewiczStephane/data-lake-architecture.git
 cd data-lake-architecture
-
-# Install dependencies
 make install
-
-# Start MinIO (S3-compatible storage)
-make up
-
-# Initialize data lake buckets
-make init
 ```
 
-### Generate Sample Data
+### 2. Start MinIO and Initialize Buckets
 
 ```bash
-python data/sample/generate_sample_data.py
+make up
 ```
 
-This creates synthetic e-commerce data:
-- `customers.json` / `customers.csv` - 1,000 customer records
-- `products.json` - 500 product records
-- `orders.jsonl` - 10,000 order records
+This starts MinIO (S3-compatible storage on ports 9000/9001) and automatically creates the `datalake-bronze`, `datalake-silver`, and `datalake-gold` buckets.
+
+### 3. Generate and Ingest Sample Data
+
+```bash
+# Generate synthetic e-commerce data (customers, products, orders)
+python data/sample/generate_sample_data.py
+
+# Ingest into the bronze layer
+python -m src.cli ingest -s data/sample/customers.csv -t customers --source-name ecommerce
+
+# Process bronze -> silver (with deduplication)
+python -m src.cli process -t customers -l silver --dedup-columns customer_id
+```
+
+### 4. Launch the Dashboard
+
+```bash
+make dashboard
+```
+
+Opens the Streamlit monitoring dashboard at `http://localhost:8501` with:
+- Medallion layer health metrics (record counts per Bronze/Silver/Gold)
+- Data quality heatmap (null rates, uniqueness, schema conformance)
+- Daily ingestion throughput chart
+- AWS monthly cost breakdown
 
 ## CLI Usage
 
-The `datalake` CLI provides commands for the full data pipeline:
+The CLI provides commands for the full data pipeline:
 
 ```bash
 # Ingest CSV into bronze layer
@@ -80,8 +94,9 @@ python -m src.cli ingest -s data/sample/customers.csv -t customers --source-name
 # Process bronze -> silver (with deduplication)
 python -m src.cli process -t customers -l silver --dedup-columns customer_id
 
-# Run SQL queries
+# Run SQL queries (JSON or CSV output)
 python -m src.cli query "SELECT * FROM silver_customers LIMIT 10"
+python -m src.cli query "SELECT * FROM silver_customers" -f csv
 
 # Search the data catalog
 python -m src.cli catalog search -t revenue
@@ -89,11 +104,12 @@ python -m src.cli catalog search -t revenue
 # View data lineage
 python -m src.cli catalog lineage -t customers -l silver
 
-# Estimate AWS costs
+# Estimate AWS costs (table or JSON output)
 python -m src.cli cost-estimate -c configs/cost_params.yaml -f table
-
-# JSON output for programmatic use
 python -m src.cli cost-estimate -c configs/cost_params.yaml -f json
+
+# Initialize buckets manually (not needed if using make up)
+python -m src.cli init
 ```
 
 Use `-v` for verbose (debug) logging:
@@ -165,20 +181,15 @@ Resources provisioned:
 ## Development
 
 ```bash
-# Run tests with coverage
-make test
-
-# Lint and format
-make lint
-
-# Start local stack
-make up
-
-# Stop local stack
-make down
-
-# Open shell in container
-make shell
+make install    # Install dependencies
+make test       # Run tests with coverage
+make lint       # Lint and format with ruff
+make up         # Start MinIO stack
+make down       # Stop MinIO stack
+make dashboard  # Launch Streamlit dashboard
+make run        # Run CLI (python -m src.main)
+make shell      # Open shell in datalake container
+make clean      # Remove __pycache__ and .pyc files
 ```
 
 ### Running Tests
@@ -201,6 +212,8 @@ data-lake-architecture/
 ├── src/
 │   ├── catalog/           # Metadata store and schema manager
 │   ├── cost/              # AWS cost estimator
+│   ├── dashboard/         # Streamlit monitoring dashboard
+│   │   └── app.py
 │   ├── processing/        # Bronze, silver, gold layer processors
 │   │   ├── bronze_loader.py
 │   │   ├── silver_processor.py
@@ -209,13 +222,14 @@ data-lake-architecture/
 │   ├── query/             # DuckDB query engine
 │   ├── storage/           # MinIO client and data partitioner
 │   ├── utils/             # Config and logging utilities
-│   └── cli.py             # Click CLI entry point
+│   ├── cli.py             # Click CLI entry point
+│   └── main.py            # Main entry point (runs CLI)
 ├── terraform/             # AWS infrastructure templates
 ├── tests/                 # Test suite (87% coverage)
 ├── configs/               # YAML configuration files
 ├── data/sample/           # Sample data generator
 ├── .github/workflows/     # CI pipeline
-├── docker-compose.yml     # Local development stack
+├── docker-compose.yml     # Local development stack (MinIO)
 ├── Dockerfile
 ├── Makefile
 └── requirements.txt

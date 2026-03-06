@@ -1,4 +1,4 @@
-.PHONY: install test lint clean run up down init shell
+.PHONY: install test lint clean run up down init shell dashboard
 
 install:
 	pip install -r requirements.txt
@@ -28,3 +28,6 @@ init: up
 
 shell:
 	docker-compose exec datalake bash
+
+dashboard:
+	streamlit run src/dashboard/app.py
