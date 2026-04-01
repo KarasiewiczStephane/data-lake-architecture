@@ -1,6 +1,6 @@
 # Data Lake Architecture
 
-A production-grade data lake implementation using the medallion architecture pattern (Bronze/Silver/Gold layers) with MinIO as S3-compatible storage, DuckDB as the query engine, and Terraform templates for AWS deployment.
+> Production data lake with medallion architecture (Bronze/Silver/Gold) — MinIO storage, DuckDB query engine, and Terraform for AWS deployment.
 
 ## Architecture
 
@@ -220,6 +220,11 @@ data-lake-architecture/
 ├── Makefile
 └── requirements.txt
 ```
+
+
+## Author
+
+**Stéphane Karasiewicz** — [skarazdata.com](https://skarazdata.com) | [LinkedIn](https://www.linkedin.com/in/stephane-karasiewicz/)
 
 ## License
 
